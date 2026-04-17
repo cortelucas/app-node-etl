@@ -6,7 +6,10 @@ services:
     volumes:
       - ./src:/app/src
       - ./package.json:/app/package.json
-    command: sh -c "npm install && npm run start"
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsup.config.ts:/app/tsup.config.ts
+      - ./products.csv:/app/products.csv
+    command: sh -c "npm install && npm run build && npm run start"
     environment:
       - DATABASE_URL=postgres://cortelucas:luc@sC06@db:5432/etl_db
       - SMB_SHARE=\\\\smb\\share
