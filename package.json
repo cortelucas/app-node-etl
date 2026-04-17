@@ -4,7 +4,8 @@
   "description": "Application to extract, transform and load data from a csv file to a database",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node dist/main/index.js",
+    "start:dev": "tsx watch src/main/index.ts"
   },
   "keywords": [],
   "author": "cortelucas",
@@ -12,6 +13,7 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
 }
