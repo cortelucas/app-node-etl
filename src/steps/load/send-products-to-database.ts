@@ -1,4 +1,5 @@
 import type { IStep } from '@/shared/contracts/IStep.js';
+import { LoadError } from '@/shared/errors/index.js';
 
 type Product = {
   name: string;
@@ -52,11 +53,15 @@ export class SendProductsToDatabase implements IStep<Product[], Output> {
       RETURNING xmax
     `;
 
-    const result = await this.deps.db.query(sql, params);
+    try {
+      const result = await this.deps.db.query(sql, params);
 
-    const inserted = result.rows.filter((r) => r.xmax === '0').length;
-    const updated = result.rows.filter((r) => r.xmax !== '0').length;
+      const inserted = result.rows.filter((r) => r.xmax === '0').length;
+      const updated = result.rows.filter((r) => r.xmax !== '0').length;
 
-    return { inserted, updated };
+      return { inserted, updated };
+    } catch (err) {
+      throw new LoadError(err);
+    }
   }
 }
