@@ -1,6 +1,7 @@
 import type { ReadStream } from 'node:fs';
 import { parse } from 'csv-parse';
 import type { IStreamStep } from '@/shared/contracts/IStep.js';
+import { ExtractError } from '@/shared/errors/index.js';
 
 type Input = {
   filePath: string;
@@ -40,19 +41,29 @@ export class ExtractProducts implements IStreamStep<Input, RawProduct[]> {
         if (batch.length >= batchSize) {
           parser.pause();
           const chunk = batch.splice(0, batchSize);
-          await onBatch(chunk);
+
+          try {
+            await onBatch(chunk);
+          } catch (err) {
+            reject(new ExtractError(err));
+          }
+
           parser.resume();
         }
       });
 
       parser.on('end', async () => {
-        if (batch.length > 0) {
-          await onBatch(batch);
+        try {
+          if (batch.length > 0) {
+            await onBatch(batch);
+          }
+          resolve();
+        } catch (err) {
+          reject(new ExtractError(err));
         }
-        resolve();
       });
 
-      parser.on('error', reject);
+      parser.on('error', (err) => reject(new ExtractError(err)));
     });
   }
 }
