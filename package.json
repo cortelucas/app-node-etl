@@ -4,7 +4,7 @@
   "description": "Application to extract, transform and load data from a csv file to a database",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/main/index.js",
+    "start": "node dist/index.cjs",
     "start:dev": "tsx watch src/main/index.ts",
     "build": "tsup",
     "lint:staged": "biome check --apply --no-bail",
