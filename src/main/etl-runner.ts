@@ -2,7 +2,7 @@ import type { IStep, IStreamStep } from '@/shared/contracts/IStep.js';
 
 type RawProduct = { name: string; price: string };
 type Product = { name: string; price: number };
-type LoadOutput = { rowCount: number };
+type LoadOutput = { inserted: number; updated: number };
 
 type Logger = {
   info: (message: string) => void;
@@ -33,31 +33,38 @@ export class ETLRunner {
       insertSize,
     } = this.deps;
 
+    const startTime = Date.now();
     let totalRecords = 0;
+    let totalInserted = 0;
+    let totalUpdated = 0;
     const insertBuffer: Product[] = [];
 
     await extract.execute({ filePath, batchSize }, async (batch) => {
       totalRecords += batch.length;
-
-      if (totalRecords === batch.length) {
-        logger.info(`Iniciando leitura em stream...`);
-      }
 
       const transformed = await transform.execute(batch);
       insertBuffer.push(...transformed);
 
       if (insertBuffer.length >= insertSize) {
         const toInsert = insertBuffer.splice(0, insertSize);
-        await load.execute(toInsert);
+        const { inserted, updated } = await load.execute(toInsert);
+        totalInserted += inserted;
+        totalUpdated += updated;
         logger.info(`${totalRecords} registros lidos e processados`);
       }
     });
 
     if (insertBuffer.length > 0) {
-      await load.execute(insertBuffer);
+      const { inserted, updated } = await load.execute(insertBuffer);
+      totalInserted += inserted;
+      totalUpdated += updated;
     }
 
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+
     logger.info(`${totalRecords} de registros lidos`);
+    logger.info(`${totalInserted} inseridos | ${totalUpdated} atualizados`);
+    logger.info(`Concluído em ${elapsed}s`);
     logger.info('Registros processados');
   }
 }
