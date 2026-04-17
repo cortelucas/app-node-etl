@@ -5,7 +5,10 @@ type Product = { name: string; price: number };
 
 const makeSut = () => {
   const dbMock = {
-    query: vi.fn().mockResolvedValue({ rowCount: 2 }),
+    query: vi.fn().mockResolvedValue({
+      rowCount: 2,
+      rows: [{ xmax: '0' }, { xmax: '123' }],
+    }),
   };
 
   const sut = new SendProductsToDatabase({ db: dbMock });
@@ -27,7 +30,7 @@ describe('SendProductsToDatabase', () => {
     expect(dbMock.query).toHaveBeenCalledOnce();
   });
 
-  it('deve retornar o rowCount da inserção', async () => {
+  it('deve retornar inserted e updated corretamente', async () => {
     const { sut } = makeSut();
 
     const products: Product[] = [
@@ -37,15 +40,15 @@ describe('SendProductsToDatabase', () => {
 
     const result = await sut.execute(products);
 
-    expect(result).toEqual({ rowCount: 2 });
+    expect(result).toEqual({ inserted: 1, updated: 1 });
   });
 
-  it('deve retornar rowCount 0 se o array estiver vazio', async () => {
+  it('deve retornar zeros se o array estiver vazio', async () => {
     const { sut, dbMock } = makeSut();
-    dbMock.query.mockResolvedValue({ rowCount: 0 });
+    dbMock.query.mockResolvedValue({ rowCount: 0, rows: [] });
 
     const result = await sut.execute([]);
 
-    expect(result).toEqual({ rowCount: 0 });
+    expect(result).toEqual({ inserted: 0, updated: 0 });
   });
 });
