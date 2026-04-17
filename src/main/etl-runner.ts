@@ -6,6 +6,7 @@ type LoadOutput = { rowCount: number };
 
 type Logger = {
   info: (message: string) => void;
+  error: (obj: unknown, message: string) => void;
 };
 
 type Dependencies = {
