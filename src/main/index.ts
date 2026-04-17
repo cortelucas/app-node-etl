@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 import cron from 'node-cron';
 import pg from 'pg';
 import { logger } from '@/shared/logger/index.js';
@@ -8,7 +8,7 @@ import { TransformData } from '@/steps/transform/transform-data.js';
 import { ETLRunner } from './etl-runner.js';
 
 async function runETL(client: pg.Client) {
-  const extract = new ExtractProducts({ readFile });
+  const extract = new ExtractProducts({ createReadStream });
   const transform = new TransformData();
   const load = new SendProductsToDatabase({ db: client });
 
