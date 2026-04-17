@@ -17,8 +17,10 @@ services:
       - SMB_USER=smvserver
       - SMB_PASS=Server123
     depends_on:
-      - db
-      - smb
+      db:
+        condition: service_healthy
+      smb:
+        condition: service_started
 
   db:
     image: bitnami/postgresql:latest
@@ -33,6 +35,12 @@ services:
     volumes:
       - pgdata:/bitnami/postgresql
       - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "cortelucas", "-d", "etl_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   smb:
     image: dperson/samba
