@@ -9,6 +9,12 @@
     "build": "tsup",
     "lint:staged": "biome check --apply --no-bail",
     "lint:fix": "biome format --write",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:staged": "vitest run --passWithNoTests",
     "prepare": "husky"
   },
   "keywords": [],
@@ -22,12 +28,16 @@
     "lint-staged": "^16.4.0",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.4"
   },
   "lint-staged": {
     "*.{ts,tsx,js,json}": [
       "npm run lint:fix",
       "git add"
+    ],
+    "*.{test,spec}.{ts,tsx}": [
+      "vitest run --passWithNoTests"
     ]
   }
 }
