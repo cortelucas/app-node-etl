@@ -1,4 +1,4 @@
-import type { IStep } from '@/shared/contracts/IStep.js';
+import type { IStep, IStreamStep } from '@/shared/contracts/IStep.js';
 
 type RawProduct = { name: string; price: string };
 type Product = { name: string; price: number };
@@ -11,7 +11,7 @@ type Logger = {
 
 type Dependencies = {
   logger: Logger;
-  extract: IStep<{ filePath: string }, RawProduct[]>;
+  extract: IStreamStep<{ filePath: string; batchSize: number }, RawProduct[]>;
   transform: IStep<RawProduct[], Product[]>;
   load: IStep<Product[], LoadOutput>;
   filePath: string;
@@ -33,36 +33,31 @@ export class ETLRunner {
       insertSize,
     } = this.deps;
 
-    const rawData = await extract.execute({ filePath });
+    let totalRecords = 0;
+    const insertBuffer: Product[] = [];
 
-    if (rawData.length === 0) {
-      logger.info('Não há registros a serem lidos');
-      return;
-    }
+    await extract.execute({ filePath, batchSize }, async (batch) => {
+      totalRecords += batch.length;
 
-    logger.info(`${rawData.length} de registros a serem lidos`);
+      if (totalRecords === batch.length) {
+        logger.info(`Iniciando leitura em stream...`);
+      }
 
-    const totalPages = Math.ceil(rawData.length / batchSize);
-    let insertBuffer: Product[] = [];
-
-    for (let page = 0; page < totalPages; page++) {
-      logger.info(`Página ${page + 1} de ${totalPages} a serem processadas`);
-
-      const chunk = rawData.slice(page * batchSize, (page + 1) * batchSize);
-      const transformed = await transform.execute(chunk);
-
+      const transformed = await transform.execute(batch);
       insertBuffer.push(...transformed);
 
       if (insertBuffer.length >= insertSize) {
-        await load.execute(insertBuffer);
-        insertBuffer = [];
+        const toInsert = insertBuffer.splice(0, insertSize);
+        await load.execute(toInsert);
+        logger.info(`${totalRecords} registros lidos e processados`);
       }
-    }
+    });
 
     if (insertBuffer.length > 0) {
       await load.execute(insertBuffer);
     }
 
+    logger.info(`${totalRecords} de registros lidos`);
     logger.info('Registros processados');
   }
 }
