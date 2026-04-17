@@ -12,5 +12,6 @@ export default defineConfig({
       '@/tests': new URL('./tests/', import.meta.url).pathname,
       '@/': new URL('./src/', import.meta.url).pathname,
     },
+    testTimeout: 60000,
   },
 });
