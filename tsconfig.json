@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
-    "lib": ["es2024", "ESNext.Array", "ESNext.Collection", "ESNext.Iterator"],
+    "lib": [
+      "es2024",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Iterator"
+    ],
     "module": "nodenext",
     "target": "es2022",
     "strict": true,
@@ -9,13 +14,24 @@
     "moduleResolution": "node16",
     "outDir": "dist",
     "sourceMap": true,
-    "rootDirs": ["src", "tests"],
+    "rootDirs": [
+      "src",
+      "tests"
+    ],
     "baseUrl": "src",
     "paths": {
-      "@/tests/*": ["../tests/*"],
-      "@/*": ["*"]
-    }
+      "@/tests/*": [
+        "../tests/*"
+      ],
+      "@/*": [
+        "*"
+      ]
+    },
+    "ignoreDeprecations": "6.0"
   },
-  "include": ["src", "tests"],
+  "include": [
+    "src/**/*",
+    "tests/**/*"
+  ],
   "exclude": []
 }
