@@ -1,0 +1,46 @@
+services:
+  app:
+    image: node:22-alpine
+    container_name: etl_app
+    working_dir: /app
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+    command: sh -c "npm install && npm run start"
+    environment:
+      - DATABASE_URL=postgres://cortelucas:luc@sC06@db:5432/etl_db
+      - SMB_SHARE=\\\\smb\\share
+      - SMB_DOMAIN=WORKGROUP
+      - SMB_USER=smvserver
+      - SMB_PASS=Server123
+    depends_on:
+      - db
+      - smb
+
+  db:
+    image: bitnami/postgresql:latest
+    container_name: etl_db
+    restart: always
+    environment:
+      - POSTGRESQL_USERNAME=cortelucas
+      - POSTGRESQL_PASSWORD=luc@sC06
+      - POSTGRESQL_DATABASE=etl_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/bitnami/postgresql
+      - ./init:/docker-entrypoint-initdb.d
+
+  smb:
+    image: dperson/samba
+    container_name: etl_smb
+    restart: always
+    command: -s "share;/share;yes;no;yes"
+    volumes:
+      - ./smbshare:/share
+    ports:
+      - "139:139"
+      - "445:445"
+
+volumes:
+  pgdata:
