@@ -1,4 +1,5 @@
 import type { IStep } from '@/shared/contracts/IStep.js';
+import { TransformError } from '@/shared/errors/index.js';
 
 type RawProduct = {
   name: string;
@@ -12,14 +13,15 @@ type Product = {
 
 export class TransformData implements IStep<RawProduct[], Product[]> {
   async execute(input: RawProduct[]): Promise<Product[]> {
-    return input.reduce<Product[]>((acc, item) => {
-      const price = parseFloat(item.price);
-
-      if (Number.isNaN(price)) return acc;
-
-      acc.push({ name: item.name, price });
-
-      return acc;
-    }, []);
+    try {
+      return input.reduce<Product[]>((acc, item) => {
+        const price = parseFloat(item.price);
+        if (Number.isNaN(price)) return acc;
+        acc.push({ name: item.name, price });
+        return acc;
+      }, []);
+    } catch (err) {
+      throw new TransformError(err);
+    }
   }
 }
