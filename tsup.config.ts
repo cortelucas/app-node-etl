@@ -7,7 +7,7 @@ interface CustomOptions extends Options {
 }
 
 export default defineConfig({
-  entry: ['src/server.ts'],
+  entry: ['src/main/index.ts'],
   format: ['cjs'],
   outDir: 'dist',
   clean: true,
