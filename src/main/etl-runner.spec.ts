@@ -4,13 +4,23 @@ import { ETLRunner } from './etl-runner.js';
 const makeSut = () => {
   const loggerMock = {
     info: vi.fn(),
+    error: vi.fn(),
   };
 
   const extractMock = {
-    execute: vi.fn().mockResolvedValue([
-      { name: 'Produto A', price: '100.00' },
-      { name: 'Produto B', price: '200.00' },
-    ]),
+    execute: vi
+      .fn()
+      .mockImplementation(
+        async (
+          _input: unknown,
+          onBatch: (batch: unknown[]) => Promise<void>,
+        ) => {
+          await onBatch([
+            { name: 'Produto A', price: '100.00' },
+            { name: 'Produto B', price: '200.00' },
+          ]);
+        },
+      ),
   };
 
   const transformMock = {
@@ -40,13 +50,11 @@ const makeSut = () => {
 describe('ETLRunner', () => {
   it('deve logar que não há registros quando o CSV estiver vazio', async () => {
     const { sut, loggerMock, extractMock } = makeSut();
-    extractMock.execute.mockResolvedValue([]);
+    extractMock.execute.mockImplementation(async () => {});
 
     await sut.execute();
 
-    expect(loggerMock.info).toHaveBeenCalledWith(
-      'Não há registros a serem lidos',
-    );
+    expect(loggerMock.info).toHaveBeenCalledWith('0 de registros lidos');
   });
 
   it('deve logar a quantidade de registros encontrados', async () => {
@@ -54,12 +62,10 @@ describe('ETLRunner', () => {
 
     await sut.execute();
 
-    expect(loggerMock.info).toHaveBeenCalledWith(
-      '2 de registros a serem lidos',
-    );
+    expect(loggerMock.info).toHaveBeenCalledWith('2 de registros lidos');
   });
 
-  it('deve chamar o transform para cada página', async () => {
+  it('deve chamar o transform para cada batch', async () => {
     const { sut, transformMock } = makeSut();
 
     await sut.execute();
