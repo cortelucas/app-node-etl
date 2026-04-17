@@ -25,11 +25,20 @@ export class SendProductsToDatabase implements IStep<Product[], Output> {
       return { rowCount: 0 };
     }
 
-    const values = input
+    const unique = Array.from(
+      input
+        .reduce((map, product) => {
+          map.set(product.name, product);
+          return map;
+        }, new Map<string, Product>())
+        .values(),
+    );
+
+    const values = unique
       .map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`)
       .join(', ');
 
-    const params = input.flatMap((p) => [p.name, p.price]);
+    const params = unique.flatMap((p) => [p.name, p.price]);
 
     const sql = `
       INSERT INTO products (name, price)
