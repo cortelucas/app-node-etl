@@ -31,7 +31,7 @@ const makeSut = () => {
   };
 
   const loadMock = {
-    execute: vi.fn().mockResolvedValue({ rowCount: 2 }),
+    execute: vi.fn().mockResolvedValue({ inserted: 1, updated: 1 }),
   };
 
   const sut = new ETLRunner({
