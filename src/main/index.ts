@@ -1,15 +1,18 @@
 import { createReadStream } from 'node:fs';
-import { readFile } from 'node:fs/promises';
 import cron from 'node-cron';
 import pg from 'pg';
 import { env } from '@/shared/env/index.js';
+import { ErrorHandler } from '@/shared/error-handler/index.js';
+import { DatabaseConnectionError } from '@/shared/errors/index.js';
 import { logger } from '@/shared/logger/index.js';
 import { ExtractProducts } from '@/steps/extract/extract-product.js';
 import { SendProductsToDatabase } from '@/steps/load/send-products-to-database.js';
 import { TransformData } from '@/steps/transform/transform-data.js';
 import { ETLRunner } from './etl-runner.js';
 
-async function runETL(client: pg.Client) {
+const errorHandler = new ErrorHandler({ logger });
+
+async function runETL(client: pg.Client): Promise<void> {
   const extract = new ExtractProducts({ createReadStream });
   const transform = new TransformData();
   const load = new SendProductsToDatabase({ db: client });
@@ -27,7 +30,7 @@ async function runETL(client: pg.Client) {
   await runner.execute();
 }
 
-async function main() {
+async function main(): Promise<void> {
   logger.info('Iniciando a aplicação');
 
   const client = new pg.Client({
@@ -39,8 +42,8 @@ async function main() {
     const result = await client.query('SELECT NOW()');
     logger.info(`Conexão com Postgres OK: ${result.rows[0].now}`);
   } catch (err) {
-    logger.error({ err }, 'Falha ao conectar no Postgres');
-    process.exit(1);
+    errorHandler.handle(new DatabaseConnectionError(err));
+    return;
   }
 
   logger.info('Iniciando carga de produtos...');
@@ -48,7 +51,7 @@ async function main() {
   try {
     await runETL(client);
   } catch (err) {
-    logger.error({ err }, 'Falha durante a execução do ETL');
+    errorHandler.handle(err);
   }
 
   let isRunning = false;
@@ -64,7 +67,7 @@ async function main() {
       logger.info('Iniciando carga de produtos...');
       await runETL(client);
     } catch (err) {
-      logger.error({ err }, 'Falha durante a execução agendada do ETL');
+      errorHandler.handle(err);
     } finally {
       isRunning = false;
     }
