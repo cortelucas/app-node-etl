@@ -1,6 +1,6 @@
 import type { IStep } from '@/shared/contracts/IStep.js';
 
-type ReadFileFn = (path: string, encoding: string) => Promise<string>;
+type ReadFileFn = (path: string, encoding: BufferEncoding) => Promise<string>;
 
 type Input = {
   filePath: string;
