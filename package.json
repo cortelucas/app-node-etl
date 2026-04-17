@@ -26,6 +26,7 @@
     "@types/node": "^25.6.0",
     "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.20.0",
+    "@types/pino": "^7.0.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "tsup": "^8.5.1",
@@ -44,6 +45,7 @@
   },
   "dependencies": {
     "node-cron": "^4.2.1",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "pino": "^10.3.1"
   }
 }
