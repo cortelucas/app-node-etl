@@ -1,6 +1,8 @@
 import { createReadStream } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import cron from 'node-cron';
 import pg from 'pg';
+import { env } from '@/shared/env/index.js';
 import { logger } from '@/shared/logger/index.js';
 import { ExtractProducts } from '@/steps/extract/extract-product.js';
 import { SendProductsToDatabase } from '@/steps/load/send-products-to-database.js';
@@ -17,7 +19,7 @@ async function runETL(client: pg.Client) {
     extract,
     transform,
     load,
-    filePath: process.env.CSV_PATH ?? 'products.csv',
+    filePath: env.CSV_PATH,
     batchSize: 1000,
     insertSize: 10000,
   });
@@ -29,7 +31,7 @@ async function main() {
   logger.info('Iniciando a aplicação');
 
   const client = new pg.Client({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: env.DATABASE_URL,
   });
 
   try {
