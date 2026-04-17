@@ -6,7 +6,10 @@ type Product = {
 };
 
 type DbClient = {
-  query: (sql: string, params?: unknown[]) => Promise<{ rowCount: number }>;
+  query: (
+    sql: string,
+    params?: unknown[],
+  ) => Promise<{ rowCount: number; rows: { xmax: string }[] }>;
 };
 
 type Dependencies = {
@@ -14,7 +17,8 @@ type Dependencies = {
 };
 
 type Output = {
-  rowCount: number;
+  inserted: number;
+  updated: number;
 };
 
 export class SendProductsToDatabase implements IStep<Product[], Output> {
@@ -22,7 +26,7 @@ export class SendProductsToDatabase implements IStep<Product[], Output> {
 
   async execute(input: Product[]): Promise<Output> {
     if (input.length === 0) {
-      return { rowCount: 0 };
+      return { inserted: 0, updated: 0 };
     }
 
     const unique = Array.from(
@@ -45,10 +49,14 @@ export class SendProductsToDatabase implements IStep<Product[], Output> {
       VALUES ${values}
       ON CONFLICT (name)
       DO UPDATE SET price = EXCLUDED.price
+      RETURNING xmax
     `;
 
     const result = await this.deps.db.query(sql, params);
 
-    return { rowCount: result.rowCount };
+    const inserted = result.rows.filter((r) => r.xmax === '0').length;
+    const updated = result.rows.filter((r) => r.xmax !== '0').length;
+
+    return { inserted, updated };
   }
 }
