@@ -1,0 +1,13 @@
+{
+  "name": "app-node-etl",
+  "version": "1.0.0",
+  "description": "Application to extract, transform and load data from a csv file to a database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "cortelucas",
+  "license": "MIT",
+  "type": "module"
+}
