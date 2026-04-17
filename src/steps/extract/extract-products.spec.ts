@@ -1,43 +1,61 @@
+import { Readable } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
 import { ExtractProducts } from './extract-product.js';
 
 const makeSut = (csvContent: string) => {
-  const readFileMock = vi.fn().mockResolvedValue(csvContent);
-  const sut = new ExtractProducts({ readFile: readFileMock });
+  const createReadStreamMock = vi
+    .fn()
+    .mockReturnValue(Readable.from([csvContent]));
 
-  return { sut, readFileMock };
+  const sut = new ExtractProducts({ createReadStream: createReadStreamMock });
+
+  return { sut, createReadStreamMock };
 };
 
 describe('ExtractProducts', () => {
-  // deve retornar uma lista de produtos brutos do CSV
-  it('should return a list of raw products from the CSV', async () => {
+  it('deve emitir um batch com os produtos do CSV', async () => {
     const { sut } = makeSut(
       'name,price\nImpedit nostrum,586.83\nHic molestiae,343.61',
     );
 
-    const result = await sut.execute({ filePath: 'produtos.csv' });
+    const batches: unknown[] = [];
 
-    expect(result).toEqual([
+    await sut.execute(
+      { filePath: 'produtos.csv', batchSize: 1000 },
+      async (batch) => {
+        batches.push(...batch);
+      },
+    );
+
+    expect(batches).toEqual([
       { name: 'Impedit nostrum', price: '586.83' },
       { name: 'Hic molestiae', price: '343.61' },
     ]);
   });
 
-  // deve retornar array vazio se o CSV estiver vazio
-  it('should return an empty array if the CSV is empty', async () => {
-    const { sut, readFileMock } = makeSut('name,price\n');
+  it('deve retornar nenhum batch se o CSV estiver vazio', async () => {
+    const { sut } = makeSut('name,price\n');
 
-    await sut.execute({ filePath: 'produtos.csv' });
+    const batches: unknown[] = [];
 
-    expect(readFileMock).toHaveBeenCalledWith('produtos.csv', 'utf-8');
+    await sut.execute(
+      { filePath: 'produtos.csv', batchSize: 1000 },
+      async (batch) => {
+        batches.push(...batch);
+      },
+    );
+
+    expect(batches).toEqual([]);
   });
 
-  // deve chamar o readFile com o caminho correto
-  it('should call readFile with the correct path', async () => {
-    const { sut, readFileMock } = makeSut('name,price\n');
+  it('deve chamar o createReadStream com o caminho correto', async () => {
+    const { sut, createReadStreamMock } = makeSut('name,price\n');
 
-    await sut.execute({ filePath: 'produtos.csv' });
+    await sut.execute(
+      { filePath: 'produtos.csv', batchSize: 1000 },
+      async () => {},
+    );
 
-    expect(readFileMock).toHaveBeenCalledWith('produtos.csv', 'utf-8');
+    expect(createReadStreamMock).toHaveBeenCalledWith('produtos.csv');
   });
 });
