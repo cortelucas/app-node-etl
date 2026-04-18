@@ -1,4 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import {
+  ExtractError,
+  LoadError,
+  TransformError,
+} from '@/shared/errors/index.js';
 import { ETLRunner } from './etl-runner.js';
 
 const makeSut = () => {
@@ -87,5 +92,29 @@ describe('ETLRunner', () => {
     await sut.execute();
 
     expect(loggerMock.info).toHaveBeenCalledWith('Registros processados');
+  });
+
+  it('deve lançar ExtractError quando o extract falhar', async () => {
+    const { sut, extractMock } = makeSut();
+
+    extractMock.execute.mockRejectedValueOnce(new ExtractError());
+
+    await expect(sut.execute()).rejects.toBeInstanceOf(ExtractError);
+  });
+
+  it('deve lançar TransformError quando o transform falhar', async () => {
+    const { sut, transformMock } = makeSut();
+
+    transformMock.execute.mockRejectedValueOnce(new TransformError());
+
+    await expect(sut.execute()).rejects.toBeInstanceOf(TransformError);
+  });
+
+  it('deve lançar LoadError quando o load falhar', async () => {
+    const { sut, loadMock } = makeSut();
+
+    loadMock.execute.mockRejectedValueOnce(new LoadError());
+
+    await expect(sut.execute()).rejects.toBeInstanceOf(LoadError);
   });
 });
