@@ -6,6 +6,7 @@ import {
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ETLRunner } from '@/main/etl-runner.js';
+import { LoadError } from '@/shared/errors/index.js';
 import { ExtractProducts } from '@/steps/extract/extract-product.js';
 import { SendProductsToDatabase } from '@/steps/load/send-products-to-database.js';
 import { TransformData } from '@/steps/transform/transform-data.js';
@@ -20,8 +21,8 @@ Produto A,100.00
 Produto B,200.00
 Produto C,300.00`;
 
-const makeSut = (client: pg.Client) => {
-  const createReadStream = () => Readable.from([CSV_CONTENT]);
+const makeSut = (client: pg.Client, csvContent = CSV_CONTENT) => {
+  const createReadStream = () => Readable.from([csvContent]);
 
   const extract = new ExtractProducts({ createReadStream });
   const transform = new TransformData();
@@ -37,7 +38,7 @@ const makeSut = (client: pg.Client) => {
     insertSize: 10000,
   });
 
-  return { sut };
+  return { sut, load };
 };
 
 describe('ETL E2E', () => {
@@ -92,7 +93,12 @@ describe('ETL E2E', () => {
   }, 60000);
 
   it('deve atualizar o preço de um produto já existente', async () => {
-    const { sut } = makeSut(client);
+    const csvAtualizado = `name,price
+Produto A,999.00
+Produto B,200.00
+Produto C,300.00`;
+
+    const { sut } = makeSut(client, csvAtualizado);
 
     await sut.execute();
 
@@ -101,11 +107,11 @@ describe('ETL E2E', () => {
       ['Produto A'],
     );
 
-    expect(Number(result.rows[0].price)).toBe(100);
+    expect(Number(result.rows[0].price)).toBe(999);
   }, 60000);
 
-  it('deve retornar inseridos e atualizados corretamente na segunda execução', async () => {
-    const load = new SendProductsToDatabase({ db: client });
+  it('deve retornar inseridos e atualizados corretamente', async () => {
+    const { load } = makeSut(client);
 
     const result = await load.execute([
       { name: 'Produto A', price: 150 },
@@ -114,5 +120,41 @@ describe('ETL E2E', () => {
 
     expect(result.inserted).toBe(1);
     expect(result.updated).toBe(1);
+  }, 60000);
+
+  it('deve lançar LoadError quando a query falhar', async () => {
+    const load = new SendProductsToDatabase({
+      db: {
+        query: async () => {
+          throw new Error('query error');
+        },
+      },
+    });
+
+    await expect(
+      load.execute([{ name: 'Produto X', price: 100 }]),
+    ).rejects.toBeInstanceOf(LoadError);
+  }, 60000);
+
+  it('deve manter os dados anteriores quando um batch falhar', async () => {
+    const beforeResult = await client.query('SELECT COUNT(*) FROM products');
+    const countBefore = Number(beforeResult.rows[0].count);
+
+    const load = new SendProductsToDatabase({
+      db: {
+        query: async () => {
+          throw new Error('falha simulada');
+        },
+      },
+    });
+
+    await expect(
+      load.execute([{ name: 'Produto Falho', price: 100 }]),
+    ).rejects.toBeInstanceOf(LoadError);
+
+    const afterResult = await client.query('SELECT COUNT(*) FROM products');
+    const countAfter = Number(afterResult.rows[0].count);
+
+    expect(countAfter).toBe(countBefore);
   }, 60000);
 });
