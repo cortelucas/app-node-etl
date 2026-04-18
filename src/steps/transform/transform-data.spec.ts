@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { TransformError } from '@/shared/errors/index.js';
 import { TransformData } from './transform-data.js';
 
 const makeSut = () => {
@@ -7,8 +8,7 @@ const makeSut = () => {
 };
 
 describe('TransformData', () => {
-  // deve transformar os dados brutos em produtos formatados
-  it('should transform raw data into formatted products', async () => {
+  it('deve transformar os dados brutos em produtos formatados', async () => {
     const { sut } = makeSut();
 
     const result = await sut.execute([
@@ -22,8 +22,7 @@ describe('TransformData', () => {
     ]);
   });
 
-  // deve retornar array vazio se não houver dados
-  it('should return an empty array if there is no data', async () => {
+  it('deve retornar array vazio se não houver dados', async () => {
     const { sut } = makeSut();
 
     const result = await sut.execute([]);
@@ -31,8 +30,7 @@ describe('TransformData', () => {
     expect(result).toEqual([]);
   });
 
-  // deve ignorar registros com price inválido
-  it('', async () => {
+  it('deve ignorar registros com price inválido', async () => {
     const { sut } = makeSut();
 
     const result = await sut.execute([
@@ -41,5 +39,17 @@ describe('TransformData', () => {
     ]);
 
     expect(result).toEqual([{ name: 'Produto válido', price: 100.0 }]);
+  });
+
+  it('deve lançar TransformError quando ocorrer erro inesperado', async () => {
+    const { sut } = makeSut();
+
+    vi.spyOn(Array.prototype, 'reduce').mockImplementationOnce(() => {
+      throw new Error('erro inesperado');
+    });
+
+    await expect(
+      sut.execute([{ name: 'Produto A', price: '100.00' }]),
+    ).rejects.toBeInstanceOf(TransformError);
   });
 });
