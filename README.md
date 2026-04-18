@@ -96,8 +96,7 @@ Isso inicia:
 ### Variáveis de Ambiente
 
 | Variável | Descrição | Exemplo |
-|----------|-----------|---------|
-
+| ---------- | ----------- | --------- |
 | `DATABASE_URL` | String de conexão PostgreSQL | `postgres://user:pass@host:5432/db` |
 | `SMB_SHARE` | Caminho do compartilhamento SMB | `\\\\smb\\share` |
 | `SMB_DOMAIN` | Domínio do SMB | `WORKGROUP` |
@@ -124,8 +123,7 @@ O script de inicialização está em [init/01_products.sql](init/01_products.sql
 ## 📦 Scripts Disponíveis
 
 | Script | Descrição |
-|--------|-----------|
-
+| --------|-----------|
 | `start` | Inicia a aplicação compilada |
 | `start:dev` | Inicia em modo desenvolvimento (watch) |
 | `build` | Compila o projeto com tsup |
