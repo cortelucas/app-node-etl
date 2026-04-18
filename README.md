@@ -51,20 +51,20 @@ Este projeto implementa um pipeline **ETL (Extract, Transform, Load)** productio
 
 ```bash
 src/
-├── main/                   # Ponto de entrada e orquestrador
+├── main/                    # Ponto de entrada e orquestrador
 │   ├── ETLRunner.ts         # Orquestra extract → transform → load
 │   └── index.ts             # Inicialização, conexão e agendamento
-├── steps/                  # Steps do pipeline
+├── steps/                   # Steps do pipeline
 │   ├── extract/             # Leitura do CSV via stream (csv-parse)
 │   ├── transform/           # Conversão de tipos
 │   └── load/                # Upsert no PostgreSQL
-├── shared/                 # Utilitários compartilhados
+├── shared/                  # Utilitários compartilhados
 │   ├── contracts/           # IStep<TInput, TOutput>, IStreamStep
 │   ├── errors/              # Erros tipados por domínio
 │   ├── error-handler/       # ErrorHandler centralizado
 │   ├── logger/              # Logger estruturado (pino)
 │   └── env/                 # Validação de variáveis (zod)
-└── e2e/                    # Testes end-to-end (Testcontainers)
+└── e2e/                     # Testes end-to-end (Testcontainers)
 ```
 
 ---
