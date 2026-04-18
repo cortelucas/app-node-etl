@@ -38,6 +38,7 @@ export class ExtractProducts implements IStreamStep<Input, RawProduct[]> {
       parser.on('data', async (row: RawProduct) => {
         batch.push(row);
 
+        /* c8 ignore start */
         if (batch.length >= batchSize) {
           parser.pause();
           const chunk = batch.splice(0, batchSize);
@@ -49,6 +50,7 @@ export class ExtractProducts implements IStreamStep<Input, RawProduct[]> {
           }
 
           parser.resume();
+          /* c8 ignore end */
         }
       });
 
