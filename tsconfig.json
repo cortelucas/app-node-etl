@@ -9,7 +9,7 @@
     "moduleResolution": "node16",
     "outDir": "dist",
     "sourceMap": true,
-    "rootDirs": ["src", "tests"],
+    "rootDir": "src",
     "baseUrl": "src",
     "paths": {
       "@/tests/*": ["../tests/*"],
